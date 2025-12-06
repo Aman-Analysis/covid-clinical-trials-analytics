@@ -1,26 +1,23 @@
 # 🧬 COVID-19 Clinical Trials Analytics  
-### **SQL Data Cleaning + MySQL ETL + Power BI Dashboard**
+### SQL Data Cleaning • MySQL ETL • Power BI Dashboard
 
-This project analyzes **5,783 global COVID-19 clinical trials** using  
-**MySQL for data cleaning, transformation, ETL**,  
-and **Power BI** for building an interactive analytics dashboard.
+This project delivers an end-to-end analysis of **5,783 global COVID-19 clinical trials**, using **MySQL** for data cleaning & transformation and **Power BI** for interactive visualizations.  
+It demonstrates skills required for **Clinical Data Analyst**, **Healthcare Data Analyst**, and **Clinical Research Analytics** roles.
 
-The project was built end-to-end starting from a raw CSV dataset, and includes:
 
-- SQL-based data profiling and cleaning  
-- Extracting structured variables from messy text fields  
-- Creating analysis-ready tables & views  
-- Building a multi-page Power BI dashboard  
-- Insights relevant to clinical data analytics roles  
+# 📌 Project Objectives
 
-This project showcases skills required for **Clinical Data Analyst**,  
-**Healthcare Data Analyst**, **Biostatistics Analyst**,  
-and **Clinical Operations Analytics** roles.
+- Clean, structure, and model a raw clinical trials dataset using SQL  
+- Create analysis-ready tables and MySQL views  
+- Build an interactive, multi-page Power BI dashboard  
+- Analyze trial phases, status, enrollment, sponsors, and global locations  
+- Generate insights relevant to clinical operations and trial analytics  
 
----
 
-# 📁 **Project Structure**
+# 📁 Repository Structure
 
+covid-clinical-trials-analytics/
+│
 ├── data/
 │ ├── raw/
 │ │ └── COVID_Clinical_Trials.csv
@@ -44,46 +41,10 @@ and **Clinical Operations Analytics** roles.
 │
 └── README.md
 
-less
-Copy code
 
----
+# 🛢️ SQL Workflow (MySQL)
 
-# 📊 **Dashboard Overview**
-
-The Power BI dashboard consists of **4 interactive pages**:
-
-### **1️⃣ Overview Page**
-- Total trials  
-- Trials by phase  
-- Trials by status  
-- Trials started per year  
-- Filters: phase, status, year  
-
-### **2️⃣ Enrollment Insights**
-- Average enrollment  
-- Maximum enrollment  
-- Enrollment distribution (histogram bins)  
-- Average enrollment by phase  
-
-### **3️⃣ Sponsor Insights**
-- Top 10 sponsors by number of trials  
-- Interactive trial details table  
-- Filters: sponsor, phase, status  
-
-### **4️⃣ Location Insights**
-- World map of trial locations  
-- Top 10 countries by number of trials  
-- Country-level trial breakdown table  
-
-> Add screenshots of your dashboard pages inside `/powerbi/screenshots/`  
-> and embed them below after uploading.
-
----
-
-# 🛢️ **SQL Work: Data Cleaning & Transformation (MySQL)**
-
-## 🔹 Step 1 — Create Table (Wide Structure + Text Columns Safe)
+## 1️⃣ Create Table
 
 ```sql
 CREATE TABLE covid_clinical_trials (
@@ -115,18 +76,17 @@ CREATE TABLE covid_clinical_trials (
   `Study_Documents` LONGTEXT,
   `URL` VARCHAR(255)
 ) CHARACTER SET utf8mb4;
-🔹 Step 2 — Load CSV Using LOAD DATA
+2️⃣ Load CSV into MySQL
 sql
 Copy code
-LOAD DATA LOCAL INFILE 'COVID_clinical_trials.csv'
+LOAD DATA LOCAL INFILE 'COVID_Clinical_Trials.csv'
 INTO TABLE covid_clinical_trials
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 LINES;
-🔹 Step 3 — Standardize Phase & Status
+3️⃣ Standardize Trial Phase
 sql
-Copy code
 UPDATE covid_clinical_trials
 SET Phase_norm = CASE
     WHEN Phases LIKE '%1%' AND Phases LIKE '%2%' THEN 'Phase 1/2'
@@ -137,8 +97,8 @@ SET Phase_norm = CASE
     WHEN Phases LIKE '%4%' THEN 'Phase 4'
     ELSE 'Other/NA'
 END;
+4️⃣ Standardize Trial Status
 sql
-Copy code
 UPDATE covid_clinical_trials
 SET Status_group = CASE
     WHEN Status LIKE '%Recruiting%' THEN 'Recruiting'
@@ -147,32 +107,26 @@ SET Status_group = CASE
     WHEN Status LIKE '%Withdrawn%' THEN 'Withdrawn'
     ELSE 'Other'
 END;
-🔹 Step 4 — Convert Dates From Text → SQL Dates
+5️⃣ Parse Dates into SQL Format
 sql
-Copy code
 UPDATE covid_clinical_trials
 SET Start_Date_parsed =
     STR_TO_DATE(Start_Date, '%M %e, %Y');
-(Additional logic added for alternate date formats.)
-
-🔹 Step 5 — Extract Enrollment as Numeric
+6️⃣ Convert Enrollment to Numeric
 sql
-Copy code
 UPDATE covid_clinical_trials
 SET Enrollment_num = NULLIF(
     REGEXP_REPLACE(Enrollment, '[^0-9]', ''), ''
 );
-🔹 Step 6 — Extract Country From Locations
+7️⃣ Extract Country from Location Field
 sql
-Copy code
 ALTER TABLE covid_clinical_trials
 ADD COLUMN Country VARCHAR(255);
 
 UPDATE covid_clinical_trials
 SET Country = TRIM(SUBSTRING_INDEX(Locations, ',', -1));
-🔹 Step 7 — Create an Analysis View for Power BI
+8️⃣ Create a Clean Analysis View for Power BI
 sql
-Copy code
 CREATE OR REPLACE VIEW v_covid_clinical_trials AS
 SELECT
     `Rank`,
@@ -185,98 +139,96 @@ SELECT
     Sponsor_Collaborators,
     Country
 FROM covid_clinical_trials;
-This view is clean, typed, and optimized for BI tools.
+📊 Power BI Dashboard
+Page 1 — Overview
+Total trials
 
-📘 Key SQL Data Quality Checks
-sql
-Copy code
--- Null checks
-SELECT COUNT(*) FROM covid_clinical_trials
-WHERE Enrollment_num IS NULL;
+Trials by phase
 
--- Duplicate trial detection
-SELECT NCT_Number, COUNT(*)
-FROM covid_clinical_trials
-GROUP BY NCT_Number
-HAVING COUNT(*) > 1;
+Trials by status
 
--- Inconsistent date records
-SELECT *
-FROM covid_clinical_trials
-WHERE Start_Date_parsed > Completion_Date_parsed;
-📊 Power BI Dashboard Pages
-(Screenshots should be inserted after uploading your PNG files.)
+Trials per year
 
-Overview Page
-✔ Trial volumes
-✔ Phase distribution
-✔ Status distribution
-✔ Yearly trial trends
+Filters: Year, Phase, Status
 
-Enrollment Insights
-✔ Average and max enrollment
-✔ Enrollment by phase
-✔ Distribution (bins)
+Page 2 — Enrollment Insights
+Average enrollment
 
-Sponsor Insights
-✔ Top 10 sponsors
-✔ Trial-level drilldown table
+Maximum enrollment
 
-Location Insights
-✔ World map visualization
-✔ Top 10 countries
+Enrollment distribution bins
 
-🧠 Key Insights From This Analysis
-Most trials occur at Phase 2 and Phase 3 levels.
+Enrollment by phase
 
-Enrollment varies widely, with several massive trials (>10,000 participants).
+Page 3 — Sponsor Insights
+Top 10 sponsors
 
-A small number of sponsors account for a large share of global trials.
+Interactive trial table
 
-The USA, India, and China lead in trial activity for COVID-19 research.
+Sponsor, phase, and status filters
 
-Trial activity peaked strongly in 2020–2021, aligned with pandemic response timelines.
+Page 4 — Location Insights
+World map of trial locations
 
-🔄 How to Reproduce This Project
-1. Clone the repository
+Top 10 countries
+
+Location-based trial details
+
+Screenshots included in /powerbi/screenshots/
+
+📈 Key Insights
+Most COVID-19 clinical trials are concentrated in Phase 2 and Phase 3.
+
+A small number of global sponsors contribute the majority of trial activity.
+
+Enrollment varies dramatically, with several extremely large trials (>10k participants).
+
+The United States, India, and China lead in total trial count.
+
+Trial initiations peak in 2020–2021, aligned with vaccine & treatment development timelines.
+
+🚀 How to Run This Project
+1. Clone the repo
 bash
 Copy code
-git clone https://github.com/yourusername/covid-clinical-trials-analytics.git
-2. Import MySQL scripts
-Run sql/create_table.sql
+git clone https://github.com/YOUR_USERNAME/covid-clinical-trials-analytics.git
+2. Run SQL scripts in order:
+create_table.sql
 
-Run sql/load_data.sql
+load_data.sql
 
-Run sql/data_cleaning.sql
+data_cleaning.sql
 
-Run sql/create_view.sql
+create_view.sql
 
-3. Open Power BI file
-Open:
-
+3. Open the Power BI file:
 Copy code
 powerbi/Clinical_Trials_Dashboard.pbix
-Update the ODBC connection to your MySQL server.
+4. Update the MySQL ODBC connection to your local server.
+🛠️ Tech Stack
+MySQL 8.0 — Data cleaning, transformation, views
 
-🚀 Future Improvements
-Model trial duration & delays
+SQL — ETL, validation, profiling
+
+Power BI — Data modeling + multi-page visualization
+
+GitHub — Version control and publishing
+
+🔮 Future Enhancements
+Add trial duration & delay analysis
+
+Use NLP to classify trial titles or medical conditions
 
 Add predictive modeling for completion likelihood
 
-NLP analysis of study titles & conditions
-
-Sponsor segmentation clustering
-
-Enhanced geographic mapping with ISO country codes
+Map site-level locations instead of only countries
 
 📜 License
 This project is released under the MIT License.
 
-🤝 Contact & Contributions
-If you'd like to contribute or collaborate on clinical data analytics:
-
+🙋‍♂️ Contact
 Your Name
-Email: amanullashaikh555.com
-LinkedIn: https://www.linkedin.com/in/amanulla-shaik-648788391/
+Email: amanullashaikh555@gmail.com
+LinkedIn: https://linkedin.com/in/yourprofile
 GitHub: https://github.com/Aman-Analysis
 Portfolio: https://aman-analysis.github.io/amanullashaik.github.io/
